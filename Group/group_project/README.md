@@ -1,176 +1,77 @@
-# Bài Tập Nhóm — Search Engine / RAG Chatbot
+# Báo Cáo Nhóm — RAG Chatbot Pháp Luật Ma Tuý
 
-## Mục Tiêu
+## 1. Tổng Quan Dự Án
 
-Sau khi hoàn thành bài cá nhân, nhóm ngồi lại để xây dựng **1 trong 2 sản phẩm**:
+| Hạng mục | Nội dung |
+|----------|----------|
+| **Tên dự án** | DrugLaw RAG Chatbot |
+| **Môn / Ngày** | Day 08 — RAG Pipeline v2 |
+| **Sản phẩm nhóm** | RAG Chatbot + Evaluation Pipeline (DeepEval) |
+| **Phạm vi** | Chatbot trả lời câu hỏi về **pháp luật ma tuý Việt Nam** (không dùng corpus tin tức) |
+| **Repository** | `GroupRAGPipline` — branch `main` |
+| **Thành viên** | Nguyễn Minh Hiếu, Giang Thành Công, Phạm Văn Công |
+| **Ngày cập nhật** | 08/06/2026 |
 
----
+### Mục tiêu
 
-## Yêu cầu 1: ✅ Sản phẩm nhóm RAG Chatbot
-
-Xây dựng chatbot trả lời câu hỏi về pháp luật ma tuý và tin tức liên quan.
-
-**Yêu cầu:**
-- Giao diện chat (Streamlit / Gradio / Chainlit)
-- Trả lời có citation (dựa trên Task 10)
-- Hỗ trợ follow-up questions (conversation memory)
-- Hiển thị source documents đã dùng
-
-**Stack gợi ý:**
-```
-Chainlit/Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
-```
+Xây dựng chatbot RAG end-to-end: thu thập văn bản pháp luật → chuẩn hóa Markdown → chunking/indexing → hybrid retrieval → generation có citation → giao diện chat + đánh giá chất lượng bằng DeepEval.
 
 ---
 
-## Yêu cầu 2: RAG Evaluation Pipeline
+## 2. Tiến Độ Tổng Thể
 
-Sử dụng **1 trong 3 framework** sau để evaluate pipeline RAG của nhóm:
-
-### Framework lựa chọn
-
-| Framework | Cài đặt | Đặc điểm |
-|-----------|---------|-----------|
-| [DeepEval](https://github.com/confident-ai/deepeval) | `pip install deepeval` | Nhiều metric built-in, dễ integrate với pytest |
-| [RAGAS](https://github.com/explodinggradients/ragas) | `pip install ragas` | Chuẩn industry cho RAG eval, 3 trục chính |
-| [TruLens](https://github.com/truera/trulens) | `pip install trulens` | Dashboard UI, feedback functions mạnh |
-
-### Yêu cầu Evaluation
-
-1. **Tạo Golden Dataset** — tối thiểu 15 cặp Q&A (question, expected_answer, expected_context)
-2. **Chạy evaluation** trên toàn bộ golden dataset với các metrics sau:
-   - **Faithfulness** — câu trả lời có bám đúng context không?
-   - **Answer Relevance** — câu trả lời có đúng câu hỏi không?
-   - **Context Recall** — retriever có lấy đủ evidence không?
-   - **Context Precision** — trong context lấy về, bao nhiêu % thực sự hữu ích?
-3. **So sánh A/B** — chạy eval trên ít nhất 2 config khác nhau (ví dụ: có reranking vs không reranking, hoặc hybrid vs dense-only)
-4. **Báo cáo** — bảng điểm + phân tích worst performers + đề xuất cải tiến
-
-### Code mẫu — DeepEval
-
-```python
-from deepeval import evaluate
-from deepeval.metrics import (
-    FaithfulnessMetric,
-    AnswerRelevancyMetric,
-    ContextualRecallMetric,
-    ContextualPrecisionMetric,
-)
-from deepeval.test_case import LLMTestCase
-
-# Tạo test cases từ golden dataset
-test_cases = []
-for item in golden_dataset:
-    result = rag_pipeline.generate_with_citation(item["question"])
-    test_case = LLMTestCase(
-        input=item["question"],
-        actual_output=result["answer"],
-        expected_output=item["expected_answer"],
-        retrieval_context=[c["content"] for c in result["sources"]],
-    )
-    test_cases.append(test_case)
-
-# Chạy evaluation
-metrics = [
-    FaithfulnessMetric(threshold=0.7),
-    AnswerRelevancyMetric(threshold=0.7),
-    ContextualRecallMetric(threshold=0.7),
-    ContextualPrecisionMetric(threshold=0.7),
-]
-
-results = evaluate(test_cases, metrics)
-```
-
-### Code mẫu — RAGAS
-
-```python
-from ragas import evaluate
-from ragas.metrics import (
-    faithfulness,
-    answer_relevancy,
-    context_recall,
-    context_precision,
-)
-from datasets import Dataset
-
-# Chuẩn bị data
-eval_data = {
-    "question": [],
-    "answer": [],
-    "contexts": [],
-    "ground_truth": [],
-}
-
-for item in golden_dataset:
-    result = rag_pipeline.generate_with_citation(item["question"])
-    eval_data["question"].append(item["question"])
-    eval_data["answer"].append(result["answer"])
-    eval_data["contexts"].append([c["content"] for c in result["sources"]])
-    eval_data["ground_truth"].append(item["expected_answer"])
-
-dataset = Dataset.from_dict(eval_data)
-
-# Chạy evaluation
-result = evaluate(
-    dataset,
-    metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
-)
-print(result.to_pandas())
-```
-
-### Code mẫu — TruLens
-
-```python
-from trulens.apps.custom import TruCustomApp, instrument
-from trulens.core import Feedback
-from trulens.providers.openai import OpenAI as TruOpenAI
-
-provider = TruOpenAI()
-
-# Define feedback functions
-f_faithfulness = Feedback(provider.groundedness_measure_with_cot_reasons).on_output()
-f_relevance = Feedback(provider.relevance).on_input_output()
-f_context_relevance = Feedback(provider.context_relevance).on_input()
-
-# Wrap RAG pipeline
-tru_rag = TruCustomApp(
-    rag_pipeline,
-    app_name="DrugLaw_RAG",
-    feedbacks=[f_faithfulness, f_relevance, f_context_relevance],
-)
-
-# Run evaluation
-with tru_rag as recording:
-    for item in golden_dataset:
-        rag_pipeline.generate_with_citation(item["question"])
-
-# View dashboard
-from trulens.dashboard import run_dashboard
-run_dashboard()
-```
-
-### Deliverable Evaluation
-
-- [x] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [x] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [x] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [x] So sánh A/B ít nhất 2 configs
+| Hạng mục | Ghi chú |
+|----------|---------|
+| Thu thập văn bản pháp luật (Task 1) | 3 PDF trong `data/landing/legal/` |
+| Convert Markdown (Task 3) | File `.md` trong `data/standardized/legal/` |
+| Crawl tin tức (Task 2) | Bỏ qua — nhóm chỉ làm chatbot pháp luật |
+| Chunking + Indexing (Task 4) | Vector store + BM25 |
+| Semantic + Lexical Search (Task 5–6) | Hybrid search |
+| Reranking + PageIndex (Task 7–8) | Rerank + vectorless fallback |
+| Retrieval Pipeline (Task 9) | Pipeline hoàn chỉnh |
+| Generation + Citation (Task 10) | Trả lời có trích dẫn nguồn |
+| Chatbot UI (`app.py`) | Streamlit / Chainlit |
+| Golden dataset (≥15 Q&A) | `evaluation/golden_dataset.json` |
+| Evaluation pipeline | DeepEval |
+| Báo cáo eval (`results.md`) | Bảng điểm + phân tích A/B |
 
 ---
 
-## Yêu Cầu Chung
+## 3. Kiến Trúc Hệ Thống
 
-1. **Tích hợp pipeline** từ bài cá nhân của các thành viên
-2. **Demo hoạt động được** trong buổi trình bày (chạy local hoặc deploy)
-3. **Evaluation pipeline** chạy được và có báo cáo kết quả
-4. **Code push lên repository** chung của nhóm
-5. **README** mô tả kiến trúc và phân công (điền bên dưới)
+```mermaid
+flowchart LR
+    subgraph Data["Data — Nguyễn Minh Hiếu"]
+        PDF["data/landing/legal/*.pdf"]
+        MD["data/standardized/legal/*.md"]
+        PDF -->|"Task 3: MarkItDown"| MD
+    end
 
----
+    subgraph Pipeline["RAG Pipeline — Giang Thành Công"]
+        Chunk["Task 4: Chunking"]
+        Index["Vector Store + BM25"]
+        Retrieve["Task 9: Hybrid Retrieval"]
+        Rerank["Task 7: Reranking"]
+        Generate["Task 10: Generation + Citation"]
+        MD --> Chunk --> Index --> Retrieve --> Rerank --> Generate
+    end
 
-## Kiến Trúc Hệ Thống
+    subgraph App["Giao diện — Phạm Văn Công"]
+        UI["Streamlit / Chainlit Chatbot"]
+        Eval["DeepEval Evaluation"]
+        Generate --> UI
+        Generate --> Eval
+    end
+```
 
-### Tổng quan kiến trúc
+**Luồng xử lý câu hỏi:**
+
+```
+User question → Embed query → Hybrid search (dense + BM25)
+            → Rerank top-k → LLM generate answer + citations → Hiển thị UI
+```
+
+### Tổng quan kiến trúc chi tiết
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -209,24 +110,6 @@ run_dashboard()
 │                    │ Fallback Rules   │                                    │
 │                    └──────────────────┘                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data Pipeline (đã hoàn thành ở bài cá nhân)
-
-```
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  Task 1 + 2      │     │  Task 3           │     │  Task 4           │
-│  Data Collection │────▶│  Convert to       │────▶│  Chunking +       │
-│  Legal PDFs      │     │  Markdown         │     │  Embedding +      │
-│  News Crawling   │     │  (MarkItDown)     │     │  Vector Store     │
-└──────────────────┘     └──────────────────┘     └──────────────────┘
-                                                           │
-                                                           ▼
-                                                  ┌──────────────────┐
-                                                  │  vector_store.json│
-                                                  │  (28 chunks,      │
-                                                  │   384-dim)        │
-                                                  └──────────────────┘
 ```
 
 ### Luồng xử lý một câu hỏi
@@ -271,7 +154,64 @@ User Query (có thể là follow-up)
 
 ---
 
-## Cấu Trúc Thư Mục
+## 4. Dữ Liệu (Corpus Pháp Luật)
+
+### 4.1. File gốc — `data/landing/legal/`
+
+| File | Văn bản | Kích thước |
+|------|---------|------------|
+| `luat-phong-chong-ma-tuy-2021.pdf` | Luật số 73/2021/QH15 — Luật Phòng, chống ma túy | ~525 KB |
+| `bo-luat-hinh-su-2015.pdf` | Bộ luật Hình sự 2015 (sửa đổi 2017) — Chương XX: Tội phạm về ma túy | ~2.6 MB |
+| `quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.pdf` | Danh mục chất ma tuý và tiền chất | ~1.6 MB |
+
+**Nguồn tham khảo:** thuvienphapluat.vn, vanban.chinhphu.vn
+
+### 4.2. File chuẩn hóa — `data/standardized/legal/`
+
+| File Markdown | Nguồn PDF | Kích thước |
+|---------------|-----------|------------|
+| `luat-phong-chong-ma-tuy-2021.md` | Luật PCMT 2021 | ~79 KB |
+| `bo-luat-hinh-su-2015.md` | BLHS 2015 | ~834 KB |
+| `quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.md` | Danh mục chất MT | ~0.2 KB |
+
+### 4.3. Chủ đề corpus hỗ trợ
+
+- Hình phạt tội phạm ma túy (Điều 249, 250, 251 BLHS)
+- Hình thức cai nghiện (Luật PCMT 2021, Chương V)
+- Quy định chung về phòng, chống ma túy
+- Danh mục chất ma tuý nhóm I, II, III
+
+### 4.4. Chạy convert Markdown
+
+```bash
+cd Group
+pip install markitdown
+python src/task3_convert_markdown.py
+```
+
+---
+
+## 5. Phân Công Công Việc
+
+| Thành viên | MSSV | Nhiệm vụ | Task / Deliverable |
+|-----------|------|----------|-------------------|
+| **Nguyễn Minh Hiếu** | 705 | **Báo cáo nhóm & dữ liệu:** tìm/thu thập văn bản pháp luật, convert Markdown, viết README nhóm, chạy pytest kiểm tra data, mở rộng golden dataset, viết `results.md` | 1, 3; `README.md`; `golden_dataset.json`; `results.md` |
+| **Giang Thành Công** | 544 | **Code pipeline:** implement toàn bộ task RAG — chunking, indexing, semantic/lexical search, reranking, PageIndex, retrieval pipeline, generation + citation, script evaluation | 4–10; `eval_pipeline.py` |
+| **Phạm Văn Công** | 753 | **Giao diện:** xây dựng chatbot UI (Streamlit/Chainlit), tích hợp pipeline, hiển thị citation & source documents, conversation memory | `app.py`; demo trình bày |
+
+### Phối hợp giữa các thành viên
+
+```
+Hiếu (data + báo cáo)  →  cung cấp .md trong data/standardized/
+        ↓
+Giang (code task)      →  implement src/task4–task10, eval_pipeline.py
+        ↓
+Công (giao diện)       →  gọi pipeline trong app.py, hiển thị kết quả cho user
+```
+
+---
+
+## 6. Cấu Trúc Thư Mục
 
 ```
 Group/
@@ -315,22 +255,34 @@ Group/
 
 ---
 
-## Phân Công Công Việc
+## 7. Sản Phẩm Nhóm
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| ... | ... | Task 1+2: Thu thập dữ liệu (legal PDFs + crawl news) | ✅ |
-| ... | ... | Task 3+4: Convert Markdown + Chunking & Embedding | ✅ |
-| ... | ... | Task 5+6: Semantic Search + Lexical Search (BM25) | ✅ |
-| ... | ... | Task 7+8: Reranking (RRF/Cross-encoder/MMR) + PageIndex Fallback | ✅ |
-| ... | ... | Task 9+10: Retrieval Pipeline + Generation có Citation | ✅ |
-| ... | ... | Group: Tích hợp pipeline → Chatbot backend (chatbot.py) | ✅ |
-| ... | ... | Group: Streamlit UI (app.py) + README kiến trúc | ✅ |
-| ... | ... | Group: Evaluation Pipeline + Golden Dataset + Báo cáo | ✅ |
+### 7.1. RAG Chatbot (Yêu cầu chính)
+
+- Giao diện chat: **Streamlit** (gợi ý)
+- Trả lời có **citation** (Task 10)
+- Hỗ trợ **follow-up questions** (conversation memory)
+- Hiển thị **source documents** đã dùng
+
+```
+Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
+```
+
+### 7.2. Evaluation Pipeline (DeepEval)
+
+| Deliverable | Đường dẫn |
+|-------------|-----------|
+| Golden dataset (≥15 Q&A) | `evaluation/golden_dataset.json` |
+| Script evaluation | `evaluation/eval_pipeline.py` |
+| Báo cáo kết quả + A/B | `evaluation/results.md` |
+
+**Metrics:** Faithfulness, Answer Relevance, Context Recall, Context Precision
+
+**A/B so sánh:** hybrid search vs dense-only, hoặc có reranking vs không reranking
 
 ---
 
-## Hướng Dẫn Chạy
+## 8. Hướng Dẫn Chạy
 
 ### 1. Cài đặt dependencies
 
@@ -364,9 +316,18 @@ cd Group
 python group_project/evaluation/eval_pipeline.py
 ```
 
+### Kiểm tra data
+
+```bash
+pytest tests/test_individual.py::TestTask1 -v   # legal PDF
+pytest tests/test_individual.py::TestTask3 -v   # markdown
+```
+
 ---
 
-## Tính Năng Đã Hoàn Thành
+## 9. Tính Năng & Công Nghệ
+
+### Tính Năng Đã Hoàn Thành
 
 | Tính năng | Mô tả | Trạng thái |
 |-----------|-------|------------|
@@ -378,9 +339,7 @@ python group_project/evaluation/eval_pipeline.py
 | 📊 Evaluation | Golden dataset 15+ câu, 4 metrics, A/B comparison | ✅ |
 | 🔄 Fallback | PageIndex khi hybrid score thấp, rule-based khi không có API | ✅ |
 
----
-
-## Công Nghệ Sử Dụng
+### Công Nghệ Sử Dụng
 
 | Thành phần | Công nghệ |
 |------------|-----------|
@@ -396,4 +355,22 @@ python group_project/evaluation/eval_pipeline.py
 
 ---
 
-## Lưu ý: Hãy giữ lại repo này nếu như bạn học track 3 giai đoạn 2, chúng ta sẽ phát triển tiếp dự án lên knowledge graph để khắc phục các câu hỏi hóc búa khi có các câu hỏi khó.
+## 10. Tham Khảo & Checklist
+
+Chi tiết đầy đủ về Task 1–10, chấm điểm và code mẫu evaluation: xem [`../README.md`](../README.md).
+
+### Checklist nộp bài nhóm
+
+- [x] RAG Chatbot demo hoạt động được
+- [x] Tích hợp pipeline các thành viên
+- [x] README mô tả kiến trúc + phân công *(file này)*
+- [x] Golden dataset ≥15 Q&A
+- [x] Evaluation chạy được với ≥4 metrics
+- [x] So sánh A/B ≥2 configs + phân tích worst performers
+- [x] Code push lên repository chung
+
+---
+
+## Lưu ý
+
+Giữ lại repo này nếu học track 3 giai đoạn 2 — dự án sẽ phát triển tiếp lên **knowledge graph** để xử lý các câu hỏi phức tạp hơn.
