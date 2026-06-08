@@ -1,0 +1,8 @@
+# Ca sĩ Châu Việt Cường bị kết án tù do ảo giác ma túy gây chết người
+
+**Source:** https://vietnamnet.vn/ca-si-chau-viet-cuong-lanh-an-vi-ao-giac-ma-tuy-gay-chet-nguoi-456789.html
+**Crawled:** 2026-06-08T15:51:36.549150
+
+---
+
+Tòa án nhân dân TP Hà Nội đã tuyên phạt Nguyễn Việt Cường (ca sĩ Châu Việt Cường) mức án tù giam về tội giết người. Do sử dụng ma túy tổng hợp liều cao dẫn đến bị ảo giác (ngáo đá), Châu Việt Cường nghĩ rằng cô gái đi cùng bị ma nhập nên đã nhét hàng chục nhánh tỏi vào miệng nạn nhân khiến nạn nhân bị ngạt thở dẫn đến tử vong. Vụ việc là hồi chuông cảnh tỉnh sâu sắc về tác hại ghê gớm của các chất ma túy tổng hợp đối với hệ thần kinh con người, có thể dẫn đến hành vi giết người vô thức.

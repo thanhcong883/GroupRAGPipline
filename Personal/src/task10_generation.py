@@ -75,23 +75,25 @@ def reorder_for_llm(chunks: list[dict]) -> list[dict]:
     Returns:
         List reordered để maximize LLM attention.
     """
-    if len(chunks) <= 2:
-        return chunks
+    # TODO: Implement reordering
+    #
+    # if len(chunks) <= 2:
+    #     return chunks
+    #
+    # # Split into first half (important → đầu) and second half (important → cuối)
+    # reordered = []
+    # for i in range(0, len(chunks), 2):
+    #     reordered.append(chunks[i])  # Odd positions go first
+    # for i in range(len(chunks) - 1 - (len(chunks) % 2 == 0), 0, -2):
+    #     reordered.append(chunks[i])  # Even positions go last (reversed)
+    #
+    # return reordered
+    raise NotImplementedError("Implement reorder_for_llm")
 
-    n = len(chunks)
-    result = [None] * n
-    left = 0
-    right = n - 1
 
-    for i, chunk in enumerate(chunks):
-        if i % 2 == 0:
-            result[left] = chunk
-            left += 1
-        else:
-            result[right] = chunk
-            right -= 1
-    return result
-
+# =============================================================================
+# CONTEXT FORMATTING
+# =============================================================================
 
 def format_context(chunks: list[dict]) -> str:
     """
@@ -104,35 +106,23 @@ def format_context(chunks: list[dict]) -> str:
     Returns:
         Formatted context string.
     """
-    context_parts = []
-    for i, chunk in enumerate(chunks, 1):
-        metadata = chunk.get("metadata", {})
-        source = metadata.get("source", f"Source {i}")
-        doc_type = metadata.get("type", "unknown")
-        context_parts.append(
-            f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
-            f"{chunk['content'].strip()}"
-        )
-    return "\n\n---\n\n".join(context_parts)
+    # TODO: Implement context formatting
+    #
+    # context_parts = []
+    # for i, chunk in enumerate(chunks, 1):
+    #     source = chunk.get("metadata", {}).get("source", f"Source {i}")
+    #     doc_type = chunk.get("metadata", {}).get("type", "unknown")
+    #     context_parts.append(
+    #         f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
+    #         f"{chunk['content']}\n"
+    #     )
+    # return "\n---\n".join(context_parts)
+    raise NotImplementedError("Implement format_context")
 
 
-def generate_fallback_answer(query: str, chunks: list[dict]) -> str:
-    """
-    Tạo câu trả lời quy tắc dự phòng tiếng Việt khi không có API Key.
-    """
-    if not chunks:
-        return "Tôi không thể xác minh thông tin này từ nguồn hiện có."
-
-    parts = [f"Dựa trên tài liệu thu thập được về '{query}':"]
-    for i, chunk in enumerate(chunks[:3], 1):
-        metadata = chunk.get("metadata", {})
-        source = metadata.get("source", "Tài liệu").replace(".md", "").replace(".pdf", "").replace(".docx", "")
-        snippet = chunk["content"].strip().replace("\n", " ")
-        if len(snippet) > 200:
-            snippet = snippet[:200] + "..."
-        parts.append(f"- Theo [{source}]: {snippet}")
-    return "\n\n".join(parts)
-
+# =============================================================================
+# GENERATION
+# =============================================================================
 
 def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
     """
@@ -145,52 +135,54 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
         4. Build prompt (system + context + query)
         5. Call LLM
         6. Return answer + sources
+
+    Args:
+        query: Câu hỏi của user
+
+    Returns:
+        {
+            'answer': str,           # Câu trả lời có citation
+            'sources': list[dict],   # Các chunks đã dùng
+            'retrieval_source': str  # 'hybrid' hoặc 'pageindex'
+        }
     """
-    try:
-        from .task9_retrieval_pipeline import retrieve
-    except (ImportError, ValueError):
-        from src.task9_retrieval_pipeline import retrieve
-
-    # Step 1: Retrieve
-    chunks = retrieve(query, top_k=top_k)
-
-    # Step 2: Reorder
-    reordered = reorder_for_llm(chunks)
-
-    # Step 3: Format context
-    context = format_context(reordered)
-
-    # Step 4: Call LLM
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key and openai_key != "sk-xxx" and not openai_key.startswith("sk-"):
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=openai_key)
-
-            user_message = f"Context:\n{context}\n\n---\n\nQuestion: {query}"
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=TEMPERATURE,
-                top_p=TOP_P,
-            )
-            answer = response.choices[0].message.content
-        except Exception as e:
-            print(f"OpenAI call failed: {e}. Falling back to rule-based summary.")
-            answer = generate_fallback_answer(query, reordered)
-    else:
-        print("⚠ OPENAI_API_KEY is not set or is dummy. Using rule-based fallback generator.")
-        answer = generate_fallback_answer(query, reordered)
-
-    return {
-        "answer": answer,
-        "sources": chunks,
-        "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
-    }
-
+    # TODO: Implement generation pipeline
+    #
+    # # Step 1: Retrieve
+    # chunks = retrieve(query, top_k=top_k)
+    #
+    # # Step 2: Reorder
+    # reordered = reorder_for_llm(chunks)
+    #
+    # # Step 3: Format context
+    # context = format_context(reordered)
+    #
+    # # Step 4: Build prompt
+    # user_message = f"""Context:\n{context}\n\n---\n\nQuestion: {query}"""
+    #
+    # # Step 5: Call LLM
+    # from openai import OpenAI
+    # client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    #
+    # response = client.chat.completions.create(
+    #     model="gpt-4o-mini",
+    #     messages=[
+    #         {"role": "system", "content": SYSTEM_PROMPT},
+    #         {"role": "user", "content": user_message}
+    #     ],
+    #     temperature=TEMPERATURE,
+    #     top_p=TOP_P,
+    # )
+    #
+    # answer = response.choices[0].message.content
+    #
+    # # Step 6: Return
+    # return {
+    #     "answer": answer,
+    #     "sources": chunks,
+    #     "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
+    # }
+    raise NotImplementedError("Implement generate_with_citation")
 
 
 if __name__ == "__main__":

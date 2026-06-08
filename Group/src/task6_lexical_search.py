@@ -17,26 +17,60 @@ BM25 hoạt động thế nào:
 
 from pathlib import Path
 
-# TODO: Load corpus từ data/standardized/ hoặc từ vector store
-CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict}
+import json
+from pathlib import Path
+from rank_bm25 import BM25Okapi
+
+DB_PATH = Path(__file__).parent.parent / "data" / "vector_store.json"
+
+_corpus = None
+_bm25 = None
+
+
+def load_corpus() -> list[dict]:
+    """Load corpus từ vector store hoặc tạo từ data/standardized/."""
+    global _corpus
+    if _corpus is None:
+        if not DB_PATH.exists():
+            print(f"⚠ Vector store file does not exist: {DB_PATH}. Building corpus...")
+            try:
+                from .task4_chunking_indexing import load_documents, chunk_documents
+            except (ImportError, ValueError):
+                from src.task4_chunking_indexing import load_documents, chunk_documents
+            docs = load_documents()
+            _corpus = chunk_documents(docs)
+        else:
+            try:
+                with open(DB_PATH, "r", encoding="utf-8") as f:
+                    _corpus = json.load(f)
+            except Exception as e:
+                print(f"Error loading vector store for lexical search: {e}")
+                _corpus = []
+    return _corpus
+
+
+def get_bm25_index():
+    """Lấy hoặc xây dựng BM25 index."""
+    global _bm25
+    if _bm25 is None:
+        corpus = load_corpus()
+        if not corpus:
+            return None
+        # Tokenize cơ bản cho tiếng Việt bằng cách lower, loại bỏ dấu câu đơn giản và split
+        tokenized_corpus = []
+        for doc in corpus:
+            text = doc["content"].lower().replace(",", " ").replace(".", " ").replace(";", " ")
+            tokenized_corpus.append(text.split())
+        _bm25 = BM25Okapi(tokenized_corpus)
+    return _bm25
 
 
 def build_bm25_index(corpus: list[dict]):
     """
-    Xây dựng BM25 index từ corpus.
-
-    Args:
-        corpus: List of {'content': str, 'metadata': dict}
+    Xây dựng BM25 index từ corpus (hàm tiện ích bổ trợ).
     """
-    # TODO: Implement BM25 index
-    #
-    # from rank_bm25 import BM25Okapi
-    #
-    # # Tokenize - cho tiếng Việt nên dùng underthesea hoặc đơn giản split()
-    # tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
-    # bm25 = BM25Okapi(tokenized_corpus)
-    # return bm25
-    raise NotImplementedError("Implement build_bm25_index")
+    tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
+    return BM25Okapi(tokenized_corpus)
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
@@ -55,29 +89,36 @@ def lexical_search(query: str, top_k: int = 10) -> list[dict]:
         }
         Sorted by score descending.
     """
-    # TODO: Implement lexical search
-    #
-    # tokenized_query = query.lower().split()
-    # scores = bm25.get_scores(tokenized_query)
-    #
-    # # Get top_k indices
-    # import numpy as np
-    # top_indices = np.argsort(scores)[::-1][:top_k]
-    #
-    # results = []
-    # for idx in top_indices:
-    #     if scores[idx] > 0:
-    #         results.append({
-    #             "content": CORPUS[idx]["content"],
-    #             "score": float(scores[idx]),
-    #             "metadata": CORPUS[idx]["metadata"]
-    #         })
-    # return results
-    raise NotImplementedError("Implement lexical_search")
+    corpus = load_corpus()
+    bm25 = get_bm25_index()
+    if not corpus or not bm25:
+        return []
+
+    # Tokenize câu truy vấn
+    tokenized_query = query.lower().replace(",", " ").replace(".", " ").replace(";", " ").split()
+    if not tokenized_query:
+        return []
+
+    scores = bm25.get_scores(tokenized_query)
+
+    results = []
+    for idx, score in enumerate(scores):
+        results.append({
+            "content": corpus[idx]["content"],
+            "score": float(score),
+            "metadata": corpus[idx].get("metadata", {})
+        })
+
+    # Sắp xếp giảm dần theo điểm số
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:top_k]
 
 
 if __name__ == "__main__":
+    import sys
+    sys.stdout.reconfigure(encoding='utf-8')
     # Test
     results = lexical_search("Điều 248 tàng trữ trái phép chất ma tuý", top_k=5)
     for r in results:
         print(f"[{r['score']:.3f}] {r['content'][:100]}...")
+
