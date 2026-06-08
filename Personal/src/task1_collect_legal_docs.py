@@ -24,24 +24,24 @@ DATA_DIR = Path(__file__).parent.parent / "data" / "landing" / "legal"
 
 
 def setup_directory():
-    """Tạo thư mục data/landing/legal/ nếu chưa có và tạo các file mock."""
+    """Tạo thư mục data/landing/legal/ nếu chưa có."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     print(f"✓ Thư mục đã sẵn sàng: {DATA_DIR}")
-    
-    # Tạo 3 file mock pháp luật với size > 1024 bytes
-    mock_files = [
-        "luat-phong-chong-ma-tuy-2021.pdf",
-        "nghi-dinh-105-2021.docx",
-        "bo-luat-hinh-su-2015.pdf"
-    ]
-    for filename in mock_files:
-        filepath = DATA_DIR / filename
-        # Ghi nội dung giả lập dài hơn 1024 ký tự
-        dummy_content = f"Mock legal document content for {filename}. " * 50
-        filepath.write_text(dummy_content, encoding="utf-8")
-        print(f"✓ Đã tạo file mock: {filepath} ({filepath.stat().st_size} bytes)")
+
+
+# TODO: Tải file PDF/DOCX về DATA_DIR
+# Có thể tải thủ công hoặc viết script download nếu có direct link.
+#
+# Ví dụ nếu có direct link:
+#
+# import requests
+#
+# def download_file(url: str, filename: str):
+#     response = requests.get(url)
+#     filepath = DATA_DIR / filename
+#     filepath.write_bytes(response.content)
+#     print(f"✓ Đã tải: {filepath}")
 
 
 if __name__ == "__main__":
     setup_directory()
-

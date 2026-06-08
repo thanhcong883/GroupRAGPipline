@@ -10,6 +10,42 @@ Yêu cầu:
 """
 
 
+import json
+from pathlib import Path
+from sentence_transformers import SentenceTransformer
+
+DB_PATH = Path(__file__).parent.parent / "data" / "vector_store.json"
+
+_model = None
+
+def get_embedding_model():
+    global _model
+    if _model is None:
+        try:
+            from .task4_chunking_indexing import EMBEDDING_MODEL
+        except (ImportError, ValueError):
+            from src.task4_chunking_indexing import EMBEDDING_MODEL
+        print(f"Loading embedding model for search: {EMBEDDING_MODEL}...")
+        _model = SentenceTransformer(EMBEDDING_MODEL)
+    return _model
+
+
+def dot_product(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+
+def norm(a):
+    return sum(x * x for x in a) ** 0.5
+
+
+def cosine_similarity(a, b):
+    na = norm(a)
+    nb = norm(b)
+    if na == 0 or nb == 0:
+        return 0.0
+    return dot_product(a, b) / (na * nb)
+
+
 def semantic_search(query: str, top_k: int = 10) -> list[dict]:
     """
     Tìm kiếm ngữ nghĩa sử dụng vector similarity.
@@ -26,41 +62,45 @@ def semantic_search(query: str, top_k: int = 10) -> list[dict]:
         }
         Sorted by score descending.
     """
-    # TODO: Implement semantic search
-    #
-    # Bước 1: Embed query bằng cùng model ở Task 4
-    # Bước 2: Query vector store (cosine similarity)
-    # Bước 3: Return top_k results
-    #
-    # Ví dụ với Weaviate:
-    # import weaviate
-    # from sentence_transformers import SentenceTransformer
-    #
-    # model = SentenceTransformer("BAAI/bge-m3")
-    # query_embedding = model.encode(query).tolist()
-    #
-    # client = weaviate.connect_to_local()
-    # collection = client.collections.get("DrugLawDocs")
-    #
-    # results = collection.query.near_vector(
-    #     near_vector=query_embedding,
-    #     limit=top_k,
-    #     return_metadata=MetadataQuery(distance=True)
-    # )
-    #
-    # return [
-    #     {
-    #         "content": obj.properties["content"],
-    #         "score": 1 - obj.metadata.distance,  # distance → similarity
-    #         "metadata": {"source": obj.properties["source"], ...}
-    #     }
-    #     for obj in results.objects
-    # ]
-    raise NotImplementedError("Implement semantic_search")
+    if not DB_PATH.exists():
+        print(f"⚠ Vector store file does not exist: {DB_PATH}. Please run Task 4 first.")
+        return []
+
+    try:
+        with open(DB_PATH, "r", encoding="utf-8") as f:
+            chunks = json.load(f)
+    except Exception as e:
+        print(f"Error reading vector store: {e}")
+        return []
+
+    if not chunks:
+        return []
+
+    model = get_embedding_model()
+    query_embedding = model.encode(query, show_progress_bar=False).tolist()
+
+    results = []
+    for chunk in chunks:
+        chunk_emb = chunk.get("embedding")
+        if chunk_emb is None:
+            continue
+        score = cosine_similarity(query_embedding, chunk_emb)
+        results.append({
+            "content": chunk["content"],
+            "score": float(score),
+            "metadata": chunk.get("metadata", {})
+        })
+
+    # Sắp xếp giảm dần theo score similarity
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:top_k]
 
 
 if __name__ == "__main__":
+    import sys
+    sys.stdout.reconfigure(encoding='utf-8')
     # Test
     results = semantic_search("hình phạt cho tội tàng trữ ma tuý", top_k=5)
     for r in results:
         print(f"[{r['score']:.3f}] {r['content'][:100]}...")
+
