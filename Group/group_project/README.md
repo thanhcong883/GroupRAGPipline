@@ -1,53 +1,53 @@
-# Báo Cáo Nhóm — RAG Chatbot Pháp Luật Ma Tuý
+﻿# B├ío C├ío Nh├│m ΓÇö RAG Chatbot Ph├íp Luß║¡t Ma Tu├╜
 
-## 1. Tổng Quan Dự Án
+## 1. Tß╗òng Quan Dß╗▒ ├ün
 
-| Hạng mục | Nội dung |
+| Hß║íng mß╗Ñc | Nß╗Öi dung |
 |----------|----------|
-| **Tên dự án** | DrugLaw RAG Chatbot |
-| **Môn / Ngày** | Day 08 — RAG Pipeline v2 |
-| **Sản phẩm nhóm** | RAG Chatbot + Evaluation Pipeline (DeepEval) |
-| **Phạm vi** | Chatbot trả lời câu hỏi về **pháp luật ma tuý Việt Nam** (không dùng corpus tin tức) |
-| **Repository** | `GroupRAGPipline` — branch `personal/Hieu` |
-| **Thành viên** | Nguyễn Minh Hiếu, Giang Thành Công, Phạm Văn Công |
-| **Ngày cập nhật** | 08/06/2026 |
+| **T├¬n dß╗▒ ├ín** | DrugLaw RAG Chatbot |
+| **M├┤n / Ng├áy** | Day 08 ΓÇö RAG Pipeline v2 |
+| **Sß║ún phß║⌐m nh├│m** | RAG Chatbot + Evaluation Pipeline (DeepEval) |
+| **Phß║ím vi** | Chatbot trß║ú lß╗¥i c├óu hß╗Åi vß╗ü **ph├íp luß║¡t ma tu├╜ Viß╗çt Nam** (kh├┤ng d├╣ng corpus tin tß╗⌐c) |
+| **Repository** | `GroupRAGPipline` ΓÇö branch `personal/Hieu` |
+| **Th├ánh vi├¬n** | Nguyß╗àn Minh Hiß║┐u, Giang Th├ánh C├┤ng, Phß║ím V─ân C├┤ng |
+| **Ng├áy cß║¡p nhß║¡t** | 08/06/2026 |
 
-### Mục tiêu
+### Mß╗Ñc ti├¬u
 
-Xây dựng chatbot RAG end-to-end: thu thập văn bản pháp luật → chuẩn hóa Markdown → chunking/indexing → hybrid retrieval → generation có citation → giao diện chat + đánh giá chất lượng bằng DeepEval.
+X├óy dß╗▒ng chatbot RAG end-to-end: thu thß║¡p v─ân bß║ún ph├íp luß║¡t ΓåÆ chuß║⌐n h├│a Markdown ΓåÆ chunking/indexing ΓåÆ hybrid retrieval ΓåÆ generation c├│ citation ΓåÆ giao diß╗çn chat + ─æ├ính gi├í chß║Ñt l╞░ß╗úng bß║▒ng DeepEval.
 
 ---
 
-## 2. Tiến Độ Tổng Thể
+## 2. Tiß║┐n ─Éß╗Ö Tß╗òng Thß╗â
 
-| Hạng mục | Ghi chú |
+| Hß║íng mß╗Ñc | Ghi ch├║ |
 |----------|---------|
-| Thu thập văn bản pháp luật (Task 1) | 3 PDF trong `data/landing/legal/` |
+| Thu thß║¡p v─ân bß║ún ph├íp luß║¡t (Task 1) | 3 PDF trong `data/landing/legal/` |
 | Convert Markdown (Task 3) | File `.md` trong `data/standardized/legal/` |
-| Crawl tin tức (Task 2) | Bỏ qua — nhóm chỉ làm chatbot pháp luật |
+| Crawl tin tß╗⌐c (Task 2) | Bß╗Å qua ΓÇö nh├│m chß╗ë l├ám chatbot ph├íp luß║¡t |
 | Chunking + Indexing (Task 4) | Vector store + BM25 |
-| Semantic + Lexical Search (Task 5–6) | Hybrid search |
-| Reranking + PageIndex (Task 7–8) | Rerank + vectorless fallback |
-| Retrieval Pipeline (Task 9) | Pipeline hoàn chỉnh |
-| Generation + Citation (Task 10) | Trả lời có trích dẫn nguồn |
+| Semantic + Lexical Search (Task 5ΓÇô6) | Hybrid search |
+| Reranking + PageIndex (Task 7ΓÇô8) | Rerank + vectorless fallback |
+| Retrieval Pipeline (Task 9) | Pipeline ho├án chß╗ënh |
+| Generation + Citation (Task 10) | Trß║ú lß╗¥i c├│ tr├¡ch dß║½n nguß╗ôn |
 | Chatbot UI (`app.py`) | Streamlit / Chainlit |
-| Golden dataset (≥15 Q&A) | `evaluation/golden_dataset.json` |
+| Golden dataset (ΓëÑ15 Q&A) | `evaluation/golden_dataset.json` |
 | Evaluation pipeline | DeepEval |
-| Báo cáo eval (`results.md`) | Bảng điểm + phân tích A/B |
+| B├ío c├ío eval (`results.md`) | Bß║úng ─æiß╗âm + ph├ón t├¡ch A/B |
 
 ---
 
-## 3. Kiến Trúc Hệ Thống
+## 3. Kiß║┐n Tr├║c Hß╗ç Thß╗æng
 
 ```mermaid
 flowchart LR
-    subgraph Data["Data — Nguyễn Minh Hiếu"]
+    subgraph Data["Data ΓÇö Nguyß╗àn Minh Hiß║┐u"]
         PDF["data/landing/legal/*.pdf"]
         MD["data/standardized/legal/*.md"]
         PDF -->|"Task 3: MarkItDown"| MD
     end
 
-    subgraph Pipeline["RAG Pipeline — Giang Thành Công"]
+    subgraph Pipeline["RAG Pipeline ΓÇö Giang Th├ánh C├┤ng"]
         Chunk["Task 4: Chunking"]
         Index["Vector Store + BM25"]
         Retrieve["Task 9: Hybrid Retrieval"]
@@ -56,7 +56,7 @@ flowchart LR
         MD --> Chunk --> Index --> Retrieve --> Rerank --> Generate
     end
 
-    subgraph App["Giao diện — Phạm Văn Công"]
+    subgraph App["Giao diß╗çn ΓÇö Phß║ím V─ân C├┤ng"]
         UI["Streamlit / Chainlit Chatbot"]
         Eval["DeepEval Evaluation"]
         Generate --> UI
@@ -64,43 +64,43 @@ flowchart LR
     end
 ```
 
-**Luồng xử lý câu hỏi:**
+**Luß╗ông xß╗¡ l├╜ c├óu hß╗Åi:**
 
 ```
-User question → Embed query → Hybrid search (dense + BM25)
-            → Rerank top-k → LLM generate answer + citations → Hiển thị UI
+User question ΓåÆ Embed query ΓåÆ Hybrid search (dense + BM25)
+            ΓåÆ Rerank top-k ΓåÆ LLM generate answer + citations ΓåÆ Hiß╗ân thß╗ï UI
 ```
 
 ---
 
-## 4. Dữ Liệu (Corpus Pháp Luật)
+## 4. Dß╗» Liß╗çu (Corpus Ph├íp Luß║¡t)
 
-### 4.1. File gốc — `data/landing/legal/`
+### 4.1. File gß╗æc ΓÇö `data/landing/legal/`
 
-| File | Văn bản | Kích thước |
+| File | V─ân bß║ún | K├¡ch th╞░ß╗¢c |
 |------|---------|------------|
-| `luat-phong-chong-ma-tuy-2021.pdf` | Luật số 73/2021/QH15 — Luật Phòng, chống ma túy | ~525 KB |
-| `bo-luat-hinh-su-2015.pdf` | Bộ luật Hình sự 2015 (sửa đổi 2017) — Chương XX: Tội phạm về ma túy | ~2.6 MB |
-| `quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.pdf` | Danh mục chất ma tuý và tiền chất | ~1.6 MB |
+| `luat-phong-chong-ma-tuy-2021.pdf` | Luß║¡t sß╗æ 73/2021/QH15 ΓÇö Luß║¡t Ph├▓ng, chß╗æng ma t├║y | ~525 KB |
+| `bo-luat-hinh-su-2015.pdf` | Bß╗Ö luß║¡t H├¼nh sß╗▒ 2015 (sß╗¡a ─æß╗òi 2017) ΓÇö Ch╞░╞íng XX: Tß╗Öi phß║ím vß╗ü ma t├║y | ~2.6 MB |
+| `quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.pdf` | Danh mß╗Ñc chß║Ñt ma tu├╜ v├á tiß╗ün chß║Ñt | ~1.6 MB |
 
-**Nguồn tham khảo:** thuvienphapluat.vn, vanban.chinhphu.vn
+**Nguß╗ôn tham khß║úo:** thuvienphapluat.vn, vanban.chinhphu.vn
 
-### 4.2. File chuẩn hóa — `data/standardized/legal/`
+### 4.2. File chuß║⌐n h├│a ΓÇö `data/standardized/legal/`
 
-| File Markdown | Nguồn PDF | Kích thước |
+| File Markdown | Nguß╗ôn PDF | K├¡ch th╞░ß╗¢c |
 |---------------|-----------|------------|
-| `luat-phong-chong-ma-tuy-2021.md` | Luật PCMT 2021 | ~79 KB |
+| `luat-phong-chong-ma-tuy-2021.md` | Luß║¡t PCMT 2021 | ~79 KB |
 | `bo-luat-hinh-su-2015.md` | BLHS 2015 | ~834 KB |
-| `quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.md` | Danh mục chất MT | ~0.2 KB |
+| `quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.md` | Danh mß╗Ñc chß║Ñt MT | ~0.2 KB |
 
-### 4.3. Chủ đề corpus hỗ trợ
+### 4.3. Chß╗º ─æß╗ü corpus hß╗ù trß╗ú
 
-- Hình phạt tội phạm ma túy (Điều 249, 250, 251 BLHS)
-- Hình thức cai nghiện (Luật PCMT 2021, Chương V)
-- Quy định chung về phòng, chống ma túy
-- Danh mục chất ma tuý nhóm I, II, III
+- H├¼nh phß║ít tß╗Öi phß║ím ma t├║y (─Éiß╗üu 249, 250, 251 BLHS)
+- H├¼nh thß╗⌐c cai nghiß╗çn (Luß║¡t PCMT 2021, Ch╞░╞íng V)
+- Quy ─æß╗ïnh chung vß╗ü ph├▓ng, chß╗æng ma t├║y
+- Danh mß╗Ñc chß║Ñt ma tu├╜ nh├│m I, II, III
 
-### 4.4. Chạy convert Markdown
+### 4.4. Chß║íy convert Markdown
 
 ```bash
 cd Group
@@ -110,74 +110,74 @@ python src/task3_convert_markdown.py
 
 ---
 
-## 5. Phân Công Công Việc
+## 5. Ph├ón C├┤ng C├┤ng Viß╗çc
 
-| Thành viên | MSSV | Nhiệm vụ | Task / Deliverable |
+| Th├ánh vi├¬n | MSSV | Nhiß╗çm vß╗Ñ | Task / Deliverable |
 |-----------|------|----------|-------------------|
-| **Nguyễn Minh Hiếu** | 705 | **Báo cáo nhóm & dữ liệu:** tìm/thu thập văn bản pháp luật, convert Markdown, viết README nhóm, chạy pytest kiểm tra data, mở rộng golden dataset, viết `results.md` | 1, 3; `README.md`; `golden_dataset.json`; `results.md` |
-| **Giang Thành Công** | 544 | **Code pipeline:** implement toàn bộ task RAG — chunking, indexing, semantic/lexical search, reranking, PageIndex, retrieval pipeline, generation + citation, script evaluation | 4–10; `eval_pipeline.py` |
-| **Phạm Văn Công** | 753 | **Giao diện:** xây dựng chatbot UI (Streamlit/Chainlit), tích hợp pipeline, hiển thị citation & source documents, conversation memory | `app.py`; demo trình bày |
+| **Nguyß╗àn Minh Hiß║┐u** | 705 | **B├ío c├ío nh├│m & dß╗» liß╗çu:** t├¼m/thu thß║¡p v─ân bß║ún ph├íp luß║¡t, convert Markdown, viß║┐t README nh├│m, chß║íy pytest kiß╗âm tra data, mß╗ƒ rß╗Öng golden dataset, viß║┐t `results.md` | 1, 3; `README.md`; `golden_dataset.json`; `results.md` |
+| **Giang Th├ánh C├┤ng** | 544 | **Code pipeline:** implement to├án bß╗Ö task RAG ΓÇö chunking, indexing, semantic/lexical search, reranking, PageIndex, retrieval pipeline, generation + citation, script evaluation | 4ΓÇô10; `eval_pipeline.py` |
+| **Phß║ím V─ân C├┤ng** | 753 | **Giao diß╗çn:** x├óy dß╗▒ng chatbot UI (Streamlit/Chainlit), t├¡ch hß╗úp pipeline, hiß╗ân thß╗ï citation & source documents, conversation memory | `app.py`; demo tr├¼nh b├áy |
 
-### Phối hợp giữa các thành viên
+### Phß╗æi hß╗úp giß╗»a c├íc th├ánh vi├¬n
 
 ```
-Hiếu (data + báo cáo)  →  cung cấp .md trong data/standardized/
-        ↓
-Giang (code task)      →  implement src/task4–task10, eval_pipeline.py
-        ↓
-Công (giao diện)       →  gọi pipeline trong app.py, hiển thị kết quả cho user
+Hiß║┐u (data + b├ío c├ío)  ΓåÆ  cung cß║Ñp .md trong data/standardized/
+        Γåô
+Giang (code task)      ΓåÆ  implement src/task4ΓÇôtask10, eval_pipeline.py
+        Γåô
+C├┤ng (giao diß╗çn)       ΓåÆ  gß╗ìi pipeline trong app.py, hiß╗ân thß╗ï kß║┐t quß║ú cho user
 ```
 
 ---
 
-## 6. Sản Phẩm Nhóm
+## 6. Sß║ún Phß║⌐m Nh├│m
 
-### 6.1. RAG Chatbot (Yêu cầu chính)
+### 6.1. RAG Chatbot (Y├¬u cß║ºu ch├¡nh)
 
-- Giao diện chat: **Streamlit** (gợi ý)
-- Trả lời có **citation** (Task 10)
-- Hỗ trợ **follow-up questions** (conversation memory)
-- Hiển thị **source documents** đã dùng
+- Giao diß╗çn chat: **Streamlit** (gß╗úi ├╜)
+- Trß║ú lß╗¥i c├│ **citation** (Task 10)
+- Hß╗ù trß╗ú **follow-up questions** (conversation memory)
+- Hiß╗ân thß╗ï **source documents** ─æ├ú d├╣ng
 
 ```
-Streamlit → Retrieval (Task 9) → Generation (Task 10) → Display
+Streamlit ΓåÆ Retrieval (Task 9) ΓåÆ Generation (Task 10) ΓåÆ Display
 ```
 
 ### 6.2. Evaluation Pipeline (DeepEval)
 
-| Deliverable | Đường dẫn |
+| Deliverable | ─É╞░ß╗¥ng dß║½n |
 |-------------|-----------|
-| Golden dataset (≥15 Q&A) | `evaluation/golden_dataset.json` |
+| Golden dataset (ΓëÑ15 Q&A) | `evaluation/golden_dataset.json` |
 | Script evaluation | `evaluation/eval_pipeline.py` |
-| Báo cáo kết quả + A/B | `evaluation/results.md` |
+| B├ío c├ío kß║┐t quß║ú + A/B | `evaluation/results.md` |
 
 **Metrics:** Faithfulness, Answer Relevance, Context Recall, Context Precision
 
-**A/B so sánh:** hybrid search vs dense-only, hoặc có reranking vs không reranking
+**A/B so s├ính:** hybrid search vs dense-only, hoß║╖c c├│ reranking vs kh├┤ng reranking
 
 ---
 
-## 7. Hướng Dẫn Chạy
+## 7. H╞░ß╗¢ng Dß║½n Chß║íy
 
 ```bash
-# 1. Cài đặt
+# 1. C├ái ─æß║╖t
 cd Group
 pip install -r requirements.txt
-cp .env.example .env   # điền OPENAI_API_KEY, WEAVIATE_URL, ...
+cp .env.example .env   # ─æiß╗ün OPENAI_API_KEY, WEAVIATE_URL, ...
 
 # 2. Convert data
 python src/task3_convert_markdown.py
 
-# 3. Chạy chatbot
+# 3. Chß║íy chatbot
 streamlit run app.py
-# hoặc
+# hoß║╖c
 chainlit run app.py
 
-# 4. Chạy evaluation
+# 4. Chß║íy evaluation
 python group_project/evaluation/eval_pipeline.py
 ```
 
-### Kiểm tra data
+### Kiß╗âm tra data
 
 ```bash
 pytest tests/test_individual.py::TestTask1 -v   # legal PDF
@@ -186,22 +186,22 @@ pytest tests/test_individual.py::TestTask3 -v   # markdown
 
 ---
 
-## 8. Tham Khảo Yêu Cầu Bài Tập
+## 8. Tham Khß║úo Y├¬u Cß║ºu B├ái Tß║¡p
 
-Chi tiết đầy đủ về Task 1–10, chấm điểm và code mẫu evaluation: xem [`../README.md`](../README.md).
+Chi tiß║┐t ─æß║ºy ─æß╗º vß╗ü Task 1ΓÇô10, chß║Ñm ─æiß╗âm v├á code mß║½u evaluation: xem [`../README.md`](../README.md).
 
-### Checklist nộp bài nhóm
+### Checklist nß╗Öp b├ái nh├│m
 
-- [x] RAG Chatbot demo hoạt động được
-- [x] Tích hợp pipeline các thành viên
-- [x] README mô tả kiến trúc + phân công *(file này)*
-- [x] Golden dataset ≥15 Q&A
-- [x] Evaluation chạy được với ≥4 metrics
-- [x] So sánh A/B ≥2 configs + phân tích worst performers
-- [x] Code push lên repository chung
+- [x] RAG Chatbot demo hoß║ít ─æß╗Öng ─æ╞░ß╗úc
+- [x] T├¡ch hß╗úp pipeline c├íc th├ánh vi├¬n
+- [x] README m├┤ tß║ú kiß║┐n tr├║c + ph├ón c├┤ng *(file n├áy)*
+- [x] Golden dataset ΓëÑ15 Q&A
+- [x] Evaluation chß║íy ─æ╞░ß╗úc vß╗¢i ΓëÑ4 metrics
+- [x] So s├ính A/B ΓëÑ2 configs + ph├ón t├¡ch worst performers
+- [x] Code push l├¬n repository chung
 
 ---
 
-## Lưu ý
+## L╞░u ├╜
 
-Giữ lại repo này nếu học track 3 giai đoạn 2 — dự án sẽ phát triển tiếp lên **knowledge graph** để xử lý các câu hỏi phức tạp hơn.
+Giß╗» lß║íi repo n├áy nß║┐u hß╗ìc track 3 giai ─æoß║ín 2 ΓÇö dß╗▒ ├ín sß║╜ ph├ít triß╗ân tiß║┐p l├¬n **knowledge graph** ─æß╗â xß╗¡ l├╜ c├íc c├óu hß╗Åi phß╗⌐c tß║íp h╞ín.
