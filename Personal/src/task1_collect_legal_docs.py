@@ -29,19 +29,34 @@ def setup_directory():
     print(f"✓ Thư mục đã sẵn sàng: {DATA_DIR}")
 
 
-# TODO: Tải file PDF/DOCX về DATA_DIR
-# Có thể tải thủ công hoặc viết script download nếu có direct link.
-#
-# Ví dụ nếu có direct link:
-#
-# import requests
-#
-# def download_file(url: str, filename: str):
-#     response = requests.get(url)
-#     filepath = DATA_DIR / filename
-#     filepath.write_bytes(response.content)
-#     print(f"✓ Đã tải: {filepath}")
+LEGAL_DOCUMENTS = [
+    {
+        "filename": "luat-phong-chong-ma-tuy-2021.pdf",
+        "title": "Luật Phòng, chống ma tuý 2021 (73/2021/QH15)",
+    },
+    {
+        "filename": "bo-luat-hinh-su-2015.pdf",
+        "title": "Bộ luật Hình sự 2015 (sửa đổi 2017) — Chương XX: Tội phạm về ma tuý",
+    },
+    {
+        "filename": "quy-dinh-danh-muc-chat-ma-tuy-va-tien-chat.pdf",
+        "title": "Quy định các danh mục chất ma tuý và tiền chất",
+    },
+]
+
+
+def list_legal_documents() -> list[Path]:
+    """Liệt kê các file pháp luật đã thu thập."""
+    valid_extensions = {".pdf", ".docx", ".doc"}
+    return sorted(
+        f for f in DATA_DIR.iterdir()
+        if f.is_file() and f.suffix.lower() in valid_extensions
+    )
 
 
 if __name__ == "__main__":
     setup_directory()
+    files = list_legal_documents()
+    print(f"\nĐã thu thập {len(files)} văn bản pháp luật:")
+    for f in files:
+        print(f"  ✓ {f.name} ({f.stat().st_size:,} bytes)")
