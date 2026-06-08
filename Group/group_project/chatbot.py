@@ -40,7 +40,7 @@ class RAGChatbot:
     def __init__(self):
         self.history: list[dict] = []
         self.api_key = os.getenv("OPENAI_API_KEY", "")
-        self.use_llm = self.api_key and self.api_key != "sk-xxx" and not self.api_key.startswith("sk-")
+        self.use_llm = bool(self.api_key and self.api_key.startswith("sk-"))
 
     def clear_history(self):
         """Xóa sạch lịch sử hội thoại (memory)."""

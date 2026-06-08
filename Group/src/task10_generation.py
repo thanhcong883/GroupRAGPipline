@@ -162,7 +162,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
 
     # Step 4: Call LLM
     openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key and openai_key != "sk-xxx" and not openai_key.startswith("sk-"):
+    if openai_key and openai_key.startswith("sk-"):
         try:
             from openai import OpenAI
             client = OpenAI(api_key=openai_key)
